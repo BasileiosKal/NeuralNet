@@ -1,5 +1,5 @@
 import numpy as np
-from Optimization.Algorithms import Optimizer, compute_cost
+from Optimization.Optimizers import Optimizer, compute_cost
 from Optimization.Mini_Batch import create_mini_batches, mini_batch_optimize
 
 
@@ -101,29 +101,11 @@ class MomentumGradient(Optimizer):
         self.beta = beta
         self.AlgorithmType = "Gradient descent with Momentum"
 
-    @property
-    def epoch(self):
-        if self.mini_batch is None:
-            if self.Regularization is None:
-                Epoch = self.batch_momentum_epoch
-            else:
-                pass
-        else:
-            if self.Regularization is None:
-                Epoch = self.mini_batch_momentum_epoch
-            else:
-                pass
-        return Epoch
-
     def initialize(self, Network):
         initialize_momentum(Network)
 
     def backward_calculations(self, layer, dZ, A_prev, Z_prev, prev_function, m):
         assert A_prev.shape == (layer.prev_dims, m)
-        #layer.dZ = dZ
-        #layer.dW = (1 / m) * np.dot(layer.dZ, A_prev.T)
-        #layer.db = (1 / m) * np.sum(layer.dZ, axis=1, keepdims=True)
-        #prev_dZ = np.dot(layer.W.T, layer.dZ) * prev_function.derivative(Z_prev)
         prev_dZ = layer.backward_calc(dZ, A_prev, Z_prev, prev_function, m)
 
         layer.v_parameter["dW"] = (self.beta * layer.v_parameter["dW"]) + (1 - self.beta) * layer.dW
@@ -174,13 +156,13 @@ class MomentumGradient(Optimizer):
             Network.Layers[ii + 1].W -= self.learning_rate * Network.Layers[ii + 1].v_parameter["dW"]
             Network.Layers[ii + 1].b -= self.learning_rate * Network.Layers[ii + 1].v_parameter["db"]
 
-    def batch_momentum_epoch(self, Network, X, Y):
+    def batch_epoch(self, Network, X, Y):
         calc_cost = self.propagation(Network, X, Y)
         # update parameters
         self.update_parameters(Network)
         return calc_cost
 
-    def mini_batch_momentum_epoch(self, Network, X, Y):
+    def mini_batch_epoch(self, Network, X, Y):
         m = X.shape[1]
         mini_batches = create_mini_batches(X, Y, self.mini_batch)
         cost_total = 0

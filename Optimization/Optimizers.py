@@ -21,3 +21,26 @@ class Optimizer:
     def initialize(self, Network):
         pass
 
+    @property
+    def epoch(self):
+        if self.mini_batch is None:
+            if self.Regularization is None:
+                Epoch = self.batch_epoch
+            elif self.Regularization == "Dropout":
+                Epoch = self.batch_epoch_dropout
+        else:
+            if self.Regularization is None:
+                Epoch = self.mini_batch_epoch
+            else:
+                pass
+        return Epoch
+
+    def batch_epoch(self, Network, X, Y):
+        pass
+
+    def mini_batch_epoch(self, Network, X, Y):
+        pass
+
+    def batch_epoch_dropout(self, Network, X, Y):
+        pass
+
