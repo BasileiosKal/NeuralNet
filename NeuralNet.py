@@ -3,12 +3,9 @@ from Utilities.Ploting import plot_decision_boundary
 import matplotlib.pyplot as plt
 import copy
 
-# from Optimization.Algorithms import gradient_descent, Momentum
-# from Optimization.Mini_Batch import *
-
 
 class UntrainedLayer:
-    def __init__(self, dims, function):
+    def __init__(self, dims, function, *args, **kwargs):
         self.dims = dims[1]
         self.prev_dims = dims[0]
         self.function = function
@@ -41,28 +38,24 @@ class UntrainedLayer:
         assert self.activation.shape == self.linear_z.shape
 
 
-class Layer(UntrainedLayer):
-    def __init__(self, dims, function):
+class FCLayer(UntrainedLayer):
+    def __init__(self, dims, function, Regularization=None):
         super().__init__(dims, function)
         self.dW = None
         self.db = None
         self.dZ = None
         self.v_parameter = {}
 
-    # Backward calculation
+    # Backward calculation through the layer.
     def backward_calc(self, dZ, A_prev, Z_prev, prev_function, m):
         assert A_prev.shape == (self.prev_dims, m)
         self.dZ = dZ
-        # self.dA = dA
-        # self.dZ = self.dA * self.function.derivative(self.linear_z)
         self.dW = (1 / m) * np.dot(self.dZ, A_prev.T)
         self.db = (1 / m) * np.sum(self.dZ, axis=1, keepdims=True)
         prev_dZ = np.dot(self.W.T, self.dZ) * prev_function.derivative(Z_prev)
 
         assert self.dW.shape == self.W.shape
         assert self.db.shape == self.b.shape
-        # assert self.dZ.shape == self.linear_z.shape
-        # assert prev_dA.shape == (self.W.shape[1], self.dZ.shape[1])
 
         return prev_dZ
 
@@ -70,7 +63,9 @@ class Layer(UntrainedLayer):
 # ================================================================================================= #
 #                                     Neural Network base class                                     #
 # ================================================================================================= #
-class NeuralNetwork:
+class NeuralNetworkBase:
+    """Base neural network class.
+    TODO: add assertions in __init__ for the layers_dims"""
     def __init__(self, layers_dim):
         self.layers_dim = layers_dim
         L = len(layers_dim)
@@ -80,14 +75,49 @@ class NeuralNetwork:
 # ================================================================================================== #
 #                                        Binary Classification                                       #
 # ================================================================================================== #
-class BinaryClassifier(NeuralNetwork):
-    def __init__(self, layers_dim, functions_list):
-        super().__init__(layers_dim)
-        self.layers_functions = functions_list
+class NeuralNetwork(NeuralNetworkBase):
+    """Neural network class. It will read the dimensions of the layers and their types and initialize them
+    The class will input a list of the layers parameters and initialize them accordingly.
+    Inputs: layers: [List] Its element of the list will be a dictionary which will hold the
+                           parameters of the layers. For FC layers the elements of the dictionary must
+                           be the type: "FC", dim, activation (the activation function) and regularization
+                           The first element of the layers list must be a dictionary with the input dimensions
+    for example: Input = {"dim": X.shape[0]}
+                 FClayer1 = {"type": 'FC',
+                             "dim": 5,
+                             "activation": relu,
+                             "Regularization": None}
+                 FClayer2 = {"type": 'FC',
+                             "dim": 2,
+                             "activation": relu,
+                             "Regularization": None}
+                 FClayer3 = {"type": 'FC',
+                             "dim": 1,
+                             "activation": sigmoid,
+                             "Regularization": None}
+                 layers = [Input, FClayer1, FClayer2, FClayer3]
+
+                 Network = NeuralNetwork(layers)
+    this will create a neural network with the above layers. To train the network you can create an optimizer
+    and pass it to the train function
+                    Hyper = {"iterations": 1000,
+                             "learning_rate": 0.01,
+                             "mini_batch": 64}
+                    Hyper_parameters = Hyper.values()
+                    Optimizer = MomentumGradient(0.9, *Hyper_parameters)
+                    cost = Network.Train(X, Y, Optimizer, plot_boundary=True, plot_cost=True)"""
+
+    def __init__(self, layers):
+        super().__init__(layers)
         self.Layers = {}
         for layer in range(1, self.L):
-            self.Layers[layer] = Layer([layers_dim[layer-1], layers_dim[layer]], functions_list[layer-1])
-            self.Layers[layer].rand_initialize()
+            if layers[layer]["type"] == "FC":
+                self.Layers[layer] = FCLayer([layers[layer - 1]["dim"], layers[layer]["dim"]],
+                                             layers[layer]["activation"],
+                                             layers[layer]["Regularization"])
+                self.Layers[layer].rand_initialize()
+            else:
+                raise ValueError("only FC layers are supported at the moment")
 
     @property
     def parameters(self):
