@@ -1,10 +1,9 @@
-from NeuralNet import BinaryClassifier
-from NN_utils import gradient_checking
-import matplotlib.pyplot as plt
-import Functions
+from NeuralNet import NeuralNetwork
+from Utilities.Gradient_Checking import gradient_checking
+from Utilities import Functions
 import Testing.TestCases as TestCases
 import numpy as np
-from Optimization import gradient_descent, momentum_gradient_descent
+from Optimization.OptimizationAlgorithms import GradientDescent, MomentumGradient
 from data.Data_libraries import moons
 
 # Test cases
@@ -16,13 +15,29 @@ Y2 = TestCases.Y2
 [dA2, dA1] = TestCases.dA
 
 # Functions for the activation functions of the layers
-re = Functions.RELU(np.array([[0]]))
-si = Functions.Sigmoid(0)
-functions = [re for i in range(2)]
-functions.append(si)
+relu = Functions.RELU(np.array([[0]]))
+sigmoid = Functions.Sigmoid(0)
+functions = [relu for i in range(2)]
+functions.append(sigmoid)
 
 # The network for the testing
-TestingNetwork = BinaryClassifier([X2.shape[0], 5, 3, 1], functions)
+Input = {"dim": X2.shape[0]}
+
+FClayer1 = {"type": 'FC',
+            "dim": 5,
+            "activation": relu,
+            "Regularization": None}
+FClayer2 = {"type": 'FC',
+            "dim": 2,
+            "activation": relu,
+            "Regularization": None}
+FClayer3 = {"type": 'FC',
+            "dim": 1,
+            "activation": sigmoid,
+            "Regularization": None}
+
+layers = [Input, FClayer1, FClayer2, FClayer3]
+TestingNetwork = NeuralNetwork(layers)
 a1 = TestingNetwork.Layers[1]
 a2 = TestingNetwork.Layers[2]
 a3 = TestingNetwork.Layers[3]
@@ -43,7 +58,8 @@ a3.b = b3
 
 def test_train():
     epsilon = 1e-7
-    gradient_descent([TestingNetwork], X2, Y2, 1)
+    Opt = GradientDescent(1, 0.00075, Mini_batch=None)
+    TestingNetwork.Train(X2, Y2, Opt)
     assert (abs(a1.dW - dW1) < epsilon).all()
     assert (abs(a2.dW - dW2) < epsilon).all()
     assert (abs(a3.dW - dW3) < epsilon).all()

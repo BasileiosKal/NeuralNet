@@ -1,6 +1,6 @@
 import numpy as np
-from Optimization.Optimizers import Optimizer, compute_cost
-from Optimization.Mini_Batch import create_mini_batches, mini_batch_optimize
+from Optimization.OptBaseClass import Optimizer, compute_cost
+from Optimization.Mini_Batch import create_mini_batches
 
 
 # =============================================================================================== #
@@ -35,8 +35,21 @@ def gradient_descent_epoch(Network, X, Y):
 
 
 class GradientDescent(Optimizer):
-    def __init__(self, iterations, learning_rate, Mini_batch, Regularization=None):
-        super().__init__(iterations, learning_rate, Mini_batch, Regularization)
+    """Gradient descent optimizer
+    inputs: iterations: [int] number of iterations
+            learning_rate: [float]
+            Mini_batch: [int] the size of the mini batches or [None] for batch descent
+    example:
+        Hyper = {"iterations": 1000,
+                 "learning_rate": 0.01,
+                 "mini_batch": 64}
+        Hyper_parameters = Hyper.values()
+
+        Optimizer = GradientDescent(*Hyper_parameters)
+        cost = Network.Train(X, Y, Optimizer)"""
+
+    def __init__(self, iterations, learning_rate, Mini_batch):
+        super().__init__(iterations, learning_rate, Mini_batch)
         self.AlgorithmType = "Gradient descent"
 
     def update_parameters_with_grad_descent(self, Network):
@@ -44,45 +57,37 @@ class GradientDescent(Optimizer):
             Network.Layers[ii + 1].W -= self.learning_rate * Network.Layers[ii + 1].dW
             Network.Layers[ii + 1].b -= self.learning_rate * Network.Layers[ii + 1].db
 
-    def batch_gradient_descent(self, Network, X, Y):
-        cost = []
-        for i in range(self.iterations):
-            cost_val = gradient_descent_epoch(Network, X, Y)
-            cost.append(cost_val)
-            self.update_parameters_with_grad_descent(Network)
+    def batch_epoch(self, Network, X, Y):
+        cost_val = gradient_descent_epoch(Network, X, Y)
+        self.update_parameters_with_grad_descent(Network)
+        return cost_val
 
-        print("Gradient Descent: Cost after " + str(self.iterations) + " iterations: " + str(cost[-1]))
-        print("Accuracy with Gradient Descent: " + str(1 - ((np.sum(abs(Network.predict(X) - Y))) / Y.shape[1])))
-        print("--------------------------------------------------------------------------------")
-        return cost
-
-    def mini_batch_gradient_descent(self, Network, X, Y):
+    def mini_batch_epoch(self, Network, X, Y):
+        mini_batches = create_mini_batches(X, Y, self.mini_batch)
+        cost_total = 0
         m = X.shape[1]
-        batch_size = self.mini_batch
-        costs = []
-        epoch = gradient_descent_epoch
-        update_parameters = self.update_parameters_with_grad_descent
-        for iteration in range(self.iterations):
-            cost_avg = mini_batch_optimize(Network, epoch, update_parameters, X, Y, batch_size, m)
-            costs.append(cost_avg)
-
-        print("Gradient Descent: cost after " + str(self.iterations) + " iterations: " + str(costs[-1]))
-        print("Accuracy with Gradient Descent: " + str(1 - ((np.sum(abs(Network.predict(X) - Y))) / Y.shape[1])))
-        print("--------------------------------------------------------------------------------")
-        return costs
+        for batch in mini_batches:
+            (batch_X, batch_Y) = batch
+            # one epoch using momentum on the mini batch.
+            batch_cost = gradient_descent_epoch(Network, batch_X, batch_Y)
+            cost_total += batch_cost
+            # update the parameters.
+            self.update_parameters_with_grad_descent(Network)
+        cost_avg = cost_total / m
+        return cost_avg
 
     def Optimize(self, Network, X, Y):
-        cost = None
-        if self.mini_batch is False:
-            if self.Regularization is None:
-                cost = self.batch_gradient_descent(Network, X, Y)
-            else:
-                pass
-        else:
-            if self.Regularization is None:
-                cost = self.mini_batch_gradient_descent(Network, X, Y)
-            else:
-                pass
+        cost = []
+        self.initialize(Network)
+        Epoch = self.epoch
+        for iteration in range(self.iterations):
+            cost_value = Epoch(Network, X, Y)
+            cost.append(cost_value)
+
+        print("--------------------------------------------------------------------------------")
+        print("Momentum: cost after " + str(self.iterations) + " iterations: " + str(cost[-1]))
+        print("Accuracy with Momentum: " + str(1 - ((np.sum(abs(Network.predict(X) - Y))) / Y.shape[1])))
+        print("--------------------------------------------------------------------------------")
         return cost
 
 
@@ -90,14 +95,28 @@ class GradientDescent(Optimizer):
 #                              gradient descent with momentum                                     #
 # =============================================================================================== #
 def initialize_momentum(Network):
+    """initializing the momentum parameters"""
     for layer in Network.Layers.values():
         layer.v_parameter["dW"] = np.zeros(layer.W.shape)
         layer.v_parameter["db"] = np.zeros(layer.b.shape)
 
 
 class MomentumGradient(Optimizer):
-    def __init__(self, beta, iterations, learning_rate, Mini_batch=None, Regularization=None):
-        super().__init__(iterations, learning_rate, Mini_batch, Regularization)
+    """Momentum gradient descent optimizer
+        inputs: iterations: [int] number of iterations
+                learning_rate: [float]
+                Mini_batch: [int] the size of the mini batches or [None] for batch descent
+        example:
+            Hyper = {"iterations": 1000,
+                     "learning_rate": 0.01,
+                     "mini_batch": 64}
+            Hyper_parameters = Hyper.values()
+
+            Optimizer = MomentumGradient(*Hyper_parameters)
+            cost = Network.Train(X, Y, Optimizer)"""
+
+    def __init__(self, beta, iterations, learning_rate, Mini_batch=None):
+        super().__init__(iterations, learning_rate, Mini_batch)
         self.beta = beta
         self.AlgorithmType = "Gradient descent with Momentum"
 
@@ -118,10 +137,7 @@ class MomentumGradient(Optimizer):
 
     def back_propagation(self, Network, dZ, X):
         m = dZ.shape[1]
-        if self.Regularization is None:
-            backward_calculation = self.backward_calculations
-        else:
-            pass
+        backward_calculation = self.backward_calculations
         for layer in reversed(range(2, Network.L)):
             prev_layer = Network.Layers[layer - 1]
             current_layer = Network.Layers[layer]
@@ -130,7 +146,6 @@ class MomentumGradient(Optimizer):
             Z_prev = prev_layer.linear_z
             prev_function = prev_layer.function
             dZ = backward_calculation(current_layer, dZ, A_prev, Z_prev, prev_function, m)
-            #dZ = current_layer.backward_calc(dZ, A_prev, Z_prev, prev_function, m)
 
         # For the last layer.
         current_layer = Network.Layers[1]
