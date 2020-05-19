@@ -1,10 +1,9 @@
 from NeuralNet import NeuralNetwork
-from Utilities.Gradient_Checking import gradient_checking
 from Utilities import Functions
 import Testing.TestCases as TestCases
 import numpy as np
-from Optimization.OptimizationAlgorithms import GradientDescent, MomentumGradient
-from data.Data_libraries import moons
+from Optimization.OptimizationAlgorithms import GradientDescent
+import unittest
 
 # Test cases
 X2 = TestCases.X2
@@ -28,7 +27,7 @@ FClayer1 = {"type": 'FC',
             "activation": relu,
             "Regularization": None}
 FClayer2 = {"type": 'FC',
-            "dim": 2,
+            "dim": 3,
             "activation": relu,
             "Regularization": None}
 FClayer3 = {"type": 'FC',
@@ -56,20 +55,21 @@ a3.b = b3
 # plt.show()
 
 
-def test_train():
-    epsilon = 1e-7
-    Opt = GradientDescent(1, 0.00075, Mini_batch=None)
-    TestingNetwork.Train(X2, Y2, Opt)
-    assert (abs(a1.dW - dW1) < epsilon).all()
-    assert (abs(a2.dW - dW2) < epsilon).all()
-    assert (abs(a3.dW - dW3) < epsilon).all()
+class TestOptimizer(unittest.TestCase):
+    def test_GradientDescent(self):
+        epsilon = 1e-7
+        Opt = GradientDescent(1, 0.00075, Mini_batch=None)
+        TestingNetwork.Train(X2, Y2, Opt, print_result=False)
+        assert (abs(a1.dW - dW1) < epsilon).all()
+        assert (abs(a2.dW - dW2) < epsilon).all()
+        assert (abs(a3.dW - dW3) < epsilon).all()
 
-    assert (abs(a1.db - db1) < epsilon).all()
-    assert (abs(a2.db - db2) < epsilon).all()
-    assert (abs(a3.db - db3) < epsilon).all()
+        assert (abs(a1.db - db1) < epsilon).all()
+        assert (abs(a2.db - db2) < epsilon).all()
+        assert (abs(a3.db - db3) < epsilon).all()
 
-    assert (abs(a1.dZ - dZ1) < epsilon).all()
-    assert (abs(a2.dZ - dZ2) < epsilon).all()
-    assert (abs(a3.dZ - dZ3) < epsilon).all()
+        assert (abs(a1.dZ - dZ1) < epsilon).all()
+        assert (abs(a2.dZ - dZ2) < epsilon).all()
+        assert (abs(a3.dZ - dZ3) < epsilon).all()
 
 

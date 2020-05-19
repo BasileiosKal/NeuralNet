@@ -76,7 +76,7 @@ class GradientDescent(Optimizer):
         cost_avg = cost_total / m
         return cost_avg
 
-    def Optimize(self, Network, X, Y):
+    def Optimize(self, Network, X, Y, print_result):
         cost = []
         self.initialize(Network)
         Epoch = self.epoch
@@ -84,10 +84,11 @@ class GradientDescent(Optimizer):
             cost_value = Epoch(Network, X, Y)
             cost.append(cost_value)
 
-        print("--------------------------------------------------------------------------------")
-        print("Momentum: cost after " + str(self.iterations) + " iterations: " + str(cost[-1]))
-        print("Accuracy with Momentum: " + str(1 - ((np.sum(abs(Network.predict(X) - Y))) / Y.shape[1])))
-        print("--------------------------------------------------------------------------------")
+        if print_result:
+            print("--------------------------------------------------------------------------------")
+            print("Momentum: cost after " + str(self.iterations) + " iterations: " + str(cost[-1]))
+            print("Accuracy with Momentum: " + str(1 - ((np.sum(abs(Network.predict(X) - Y))) / Y.shape[1])))
+            print("--------------------------------------------------------------------------------")
         return cost
 
 
