@@ -144,14 +144,14 @@ class NeuralNetwork(NeuralNetworkBase):
             A_prev = A
         return A_prev
 
-    def Train(self, X, Y, Optimization_algorithm, plot_boundary=False, plot_cost=False):
+    def Train(self, X, Y, Optimization_algorithm, plot_boundary=False, plot_cost=False, print_result=True):
         """function for training the network
         Arguments:
             -X: np.array. The training data.
             -Y: mp.array. The true labels
             -Optimization_algorithm: The optimization algorithm used for training"""
 
-        cost = Optimization_algorithm.Optimize(self, X, Y)
+        cost = Optimization_algorithm.Optimize(self, X, Y, print_result)
         self.plotting(X, Y, cost, plot_boundary, plot_cost, Optimization_algorithm.AlgorithmType)
 
         return cost
