@@ -1,4 +1,4 @@
-from NeuralNet import NeuralNetwork
+from Networks.NeuralNetworks import NeuralNetwork, FCLayerBuilder
 from Utilities import Functions
 import Testing.TestCases as TestCases
 import numpy as np
@@ -16,24 +16,27 @@ Y2 = TestCases.Y2
 # Functions for the activation functions of the layers
 relu = Functions.RELU(np.array([[0]]))
 sigmoid = Functions.Sigmoid(0)
-functions = [relu for i in range(2)]
-functions.append(sigmoid)
 
 # The network for the testing
-Input = {"dim": X2.shape[0]}
+Input = {"type": "Input", "dim": X2.shape[0]}
 
-FClayer1 = {"type": 'FC',
+FClayer1 = {"Builder": FCLayerBuilder,
             "dim": 5,
             "activation": relu,
-            "Regularization": None}
-FClayer2 = {"type": 'FC',
+            "Regularization": None,
+            "name": "FC layer 1"}
+
+FClayer2 = {"Builder": FCLayerBuilder,
             "dim": 3,
             "activation": relu,
-            "Regularization": None}
-FClayer3 = {"type": 'FC',
+            "Regularization": None,
+            "name": "FC layer 2"}
+
+FClayer3 = {"Builder": FCLayerBuilder,
             "dim": 1,
             "activation": sigmoid,
-            "Regularization": None}
+            "Regularization": None,
+            "name": "FC layer 3"}
 
 layers = [Input, FClayer1, FClayer2, FClayer3]
 TestingNetwork = NeuralNetwork(layers)
@@ -42,13 +45,10 @@ a2 = TestingNetwork.Layers[2]
 a3 = TestingNetwork.Layers[3]
 
 # Setting the initial parameters
-a1.W = W1
-a1.b = b1
-a2.W = W2
-a2.b = b2
-a3.W = W3
-a3.b = b3
+TestingNetwork.reset(initial_parameters=[W1, b1, W2, b2, W3, b3])
 
+Opt = GradientDescent(1, 0.00075, Mini_batch=None)
+TestingNetwork.train(X2, Y2, Opt, print_result=False)
 # gradient_checking(TestingNetwork, X2, Y2, 100)
 # print("Cost after training: ", TestingNetwork.cost[-1])
 # plt.plot(TestingNetwork.cost)
@@ -56,10 +56,16 @@ a3.b = b3
 
 
 class TestOptimizer(unittest.TestCase):
+    """Testing gradients after one epoch.
+    The correct results are generated using
+    TensorFlow and then compered against the
+    gradients calculated by the GradientDescent
+    Optimizer. The initial values are set to
+    be the same in both casses"""
+
     def test_GradientDescent(self):
+        """Testing gradient descent"""
         epsilon = 1e-7
-        Opt = GradientDescent(1, 0.00075, Mini_batch=None)
-        TestingNetwork.Train(X2, Y2, Opt, print_result=False)
         assert (abs(a1.dW - dW1) < epsilon).all()
         assert (abs(a2.dW - dW2) < epsilon).all()
         assert (abs(a3.dW - dW3) < epsilon).all()
@@ -71,5 +77,4 @@ class TestOptimizer(unittest.TestCase):
         assert (abs(a1.dZ - dZ1) < epsilon).all()
         assert (abs(a2.dZ - dZ2) < epsilon).all()
         assert (abs(a3.dZ - dZ3) < epsilon).all()
-
 

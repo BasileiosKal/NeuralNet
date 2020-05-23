@@ -6,21 +6,34 @@ from Optimization.Mini_Batch import create_mini_batches
 # =============================================================================================== #
 #                                      gradient descent                                           #
 # =============================================================================================== #
-def gradient_descent_back_propagation(Network, dZ, X):
-    m = dZ.shape[1]
-    for layer in reversed(range(2, Network.L)):
-        prev_layer = Network.Layers[layer-1]
-        current_layer = Network.Layers[layer]
+def gradient_descent_back_propagation(Network, dZL, X):
+    """current_layer: the layer that back_propagation passes through.
+                      Specifically the layer in which we calculate the grads.
+           prev_layer: The previous layer in the back propagation direction.
+                       Specifically the layer that we have calculate the grads.
+           Example: if the current is the 3th hidden layer of the network
+                    then prev_layer will be the 2nd layer. """
 
-        A_prev = prev_layer.activation
-        Z_prev = prev_layer.linear_z
-        prev_function = prev_layer.function
-        dZ = current_layer.backward_calc(dZ, A_prev, Z_prev, prev_function, m)
+    m = dZL.shape[1]
+    # Setting up the input layer "activation" as X
+    inputLayer = Network.Layers[0]
+    inputLayer.activation = X
+
+    # Setting up the current layer that back propagation passes
+    # to be initially the last layer of the network with dZ = dZL
+    current_layer = Network.Layers[-1]
+    current_layer.dZ = dZL
+
+    for layer in reversed(Network.Layers[1:-1]):
+        prev_layer = layer
+
+        current_layer.backward_calc(prev_layer, m)
+        prev_layer.dZ = np.dot(current_layer.W.T, current_layer.dZ) * prev_layer.function.derivative(prev_layer.linear_z)
+
+        current_layer = prev_layer
+
     # For the last layer.
-    current_layer = Network.Layers[1]
-    current_layer.dZ = dZ
-    current_layer.dW = (1/m)*np.dot(dZ, X.T)
-    current_layer.db = (1/m)*np.sum(dZ, axis=1, keepdims=True)
+    Network.Layers[1].backward_calc(inputLayer, m)
 
 
 def gradient_descent_epoch(Network, X, Y):
@@ -97,7 +110,7 @@ class GradientDescent(Optimizer):
 # =============================================================================================== #
 def initialize_momentum(Network):
     """initializing the momentum parameters"""
-    for layer in Network.Layers.values():
+    for layer in Network.Layers[1:]:
         layer.v_parameter["dW"] = np.zeros(layer.W.shape)
         layer.v_parameter["db"] = np.zeros(layer.b.shape)
 
@@ -124,9 +137,17 @@ class MomentumGradient(Optimizer):
     def initialize(self, Network):
         initialize_momentum(Network)
 
-    def backward_calculations(self, layer, dZ, A_prev, Z_prev, prev_function, m):
-        assert A_prev.shape == (layer.prev_dims, m)
-        prev_dZ = layer.backward_calc(dZ, A_prev, Z_prev, prev_function, m)
+    def backward_calculations(self, layer, prev_layer, m):
+        """backward calculations for when the back propagation
+        passes from the specified layer to the prev_layer.
+
+        It uses the layers method for calculating the gradients
+        (backward_calc) of the layer adding the calculation of
+        the momentum parameter afterwards"""
+
+        assert prev_layer.activation.shape == (layer.dimensions["in"], m)
+
+        layer.backward_calc(prev_layer, m)
 
         layer.v_parameter["dW"] = (self.beta * layer.v_parameter["dW"]) + (1 - self.beta) * layer.dW
         layer.v_parameter["db"] = (self.beta * layer.v_parameter["db"]) + (1 - self.beta) * layer.db
@@ -134,28 +155,35 @@ class MomentumGradient(Optimizer):
         assert layer.dW.shape == layer.W.shape
         assert layer.db.shape == layer.b.shape
 
-        return prev_dZ
+    def back_propagation(self, Network, dZL, X):
+        """current_layer: the layer that back_propagation passes through.
+                          Specifically the layer in which we calculate the grads.
+           prev_layer: The previous layer in the back propagation direction.
+                       Specifically the layer that we have calculate the grads.
+           Example: if the current is the 3th hidden layer of the network
+                    then prev_layer will be the 2nd layer. """
 
-    def back_propagation(self, Network, dZ, X):
-        m = dZ.shape[1]
-        backward_calculation = self.backward_calculations
-        for layer in reversed(range(2, Network.L)):
-            prev_layer = Network.Layers[layer - 1]
-            current_layer = Network.Layers[layer]
+        m = dZL.shape[1]
+        # Setting up the input layer "activation" as X
+        inputLayer = Network.Layers[0]
+        inputLayer.activation = X
 
-            A_prev = prev_layer.activation
-            Z_prev = prev_layer.linear_z
-            prev_function = prev_layer.function
-            dZ = backward_calculation(current_layer, dZ, A_prev, Z_prev, prev_function, m)
+        # Setting up the current layer that back propagation passes
+        # to be initially the last layer of the network with dZ = dZL
+        current_layer = Network.Layers[-1]
+        current_layer.dZ = dZL
+
+        for layer in reversed(Network.Layers[1:-1]):
+            prev_layer = layer
+
+            self.backward_calculations(current_layer, prev_layer, m)
+            prev_layer.dZ = np.dot(current_layer.W.T, current_layer.dZ) * prev_layer.function.derivative(
+                prev_layer.linear_z)
+
+            current_layer = prev_layer
 
         # For the last layer.
-        current_layer = Network.Layers[1]
-        current_layer.dZ = dZ
-        current_layer.dW = (1 / m) * np.dot(dZ, X.T)
-        current_layer.db = (1 / m) * np.sum(dZ, axis=1, keepdims=True)
-
-        current_layer.v_parameter["dW"] = (self.beta*current_layer.v_parameter["dW"]) + (1 - self.beta)*current_layer.dW
-        current_layer.v_parameter["db"] = (self.beta*current_layer.v_parameter["db"]) + (1 - self.beta)*current_layer.db
+        self.backward_calculations(Network.Layers[1], inputLayer, m)
 
     def propagation(self, Network, X, Y):
         # front propagation
@@ -168,9 +196,9 @@ class MomentumGradient(Optimizer):
         return cost_value
 
     def update_parameters(self, Network):
-        for ii in range(Network.L - 1):
-            Network.Layers[ii + 1].W -= self.learning_rate * Network.Layers[ii + 1].v_parameter["dW"]
-            Network.Layers[ii + 1].b -= self.learning_rate * Network.Layers[ii + 1].v_parameter["db"]
+        for layer in Network.Layers[1:]:
+            layer.W -= self.learning_rate * layer.v_parameter["dW"]
+            layer.b -= self.learning_rate * layer.v_parameter["db"]
 
     def batch_epoch(self, Network, X, Y):
         calc_cost = self.propagation(Network, X, Y)
