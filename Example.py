@@ -1,35 +1,48 @@
 import data.Data_libraries.moons as data
 from Optimization.OptimizationAlgorithms import GradientDescent, MomentumGradient
-from NeuralNet import NeuralNetwork
-from Utilities.Functions import RELU,Sigmoid
+from Networks.NeuralNetworks import NeuralNetwork, FCLayerBuilder, InputLayer
+from Utilities.Functions import RELU, Sigmoid
 import numpy as np
 
 relu = RELU(np.array([[0]]))
 sigmoid = Sigmoid(0)
 
-X,Y = data.load_moon_data(n_samples=1000)
+X, Y = data.load_moon_data(n_samples=1000)
 
 Hyper = {"iterations": 1000,
          "learning_rate": 0.01,
          "mini_batch": 64}
 
-Input = {"dim": X.shape[0]}
+Input = {"type": InputLayer,
+         "dim": X.shape[0]}
 
-FClayer1 = {"type": 'FC',
+FClayer1 = {"Builder": FCLayerBuilder,
             "dim": 5,
             "activation": relu,
-            "Regularization": None}
-FClayer2 = {"type": 'FC',
+            "Regularization": None,
+            "name": "FC Layer 1"}
+
+FClayer2 = {"Builder": FCLayerBuilder,
+            "dim": 4,
+            "activation": relu,
+            "Regularization": None,
+            "name": "FC Layer 2"}
+
+FClayer3 = {"Builder": FCLayerBuilder,
             "dim": 2,
             "activation": relu,
-            "Regularization": None}
-FClayer3 = {"type": 'FC',
+            "Regularization": None,
+            "name": "FC Layer 3"}
+
+FClayer4 = {"Builder": FCLayerBuilder,
             "dim": 1,
             "activation": sigmoid,
-            "Regularization": None}
-layers = [Input, FClayer1, FClayer2, FClayer3]
+            "Regularization": None,
+            "name": "FC Layer 4"}
+
+layers = [Input, FClayer1, FClayer2, FClayer4]
 Hyper_parameters = Hyper.values()
 
 Network = NeuralNetwork(layers)
-Optimizer = MomentumGradient(0.9, *Hyper_parameters)
-cost = Network.Train(X, Y, Optimizer, plot_boundary=True, plot_cost=True)
+Optimizer = GradientDescent(*Hyper_parameters)
+cost = Network.train(X, Y, Optimizer, plot_boundary=True, plot_cost=True)

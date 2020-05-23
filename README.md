@@ -33,4 +33,3 @@ Besides this classes there other functionalities as well, like a Functions class
 
 ## Future work
 As it is, the module contains only fully conected layers and so curently i'm working on adding convolutional layers, ResNets, inception layers exetra. Also the optimizers that are implemented at the time are Gradient Dechent, Momentum Gradient Dechent and RMSprop, so i'm working to add the Adam optimizer to the mix.
-
