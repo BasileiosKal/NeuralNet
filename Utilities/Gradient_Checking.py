@@ -1,10 +1,12 @@
 import numpy as np
-from Optimization.Algorithms import gradient_descent
+from Optimization.OptimizationAlgorithms import GradientDescent
 
 
 def parameters_to_vectors(parameters):
-    """Unroll the parameters of the NN to a single vector.
-    Made for grads testing"""
+    """First helper function for gradient checking.
+    Unroll the parameters of the NN to a single vector.
+    Made for grads testing
+    """
     num_of_parameters = len(parameters)
     vector = None   # this doesnt have to be set to None
     for ii in range(num_of_parameters):
@@ -17,13 +19,15 @@ def parameters_to_vectors(parameters):
 
 
 def vector_to_parameters(vector, dims):
-    """The inverse of the previous function. Returning
+    """Second helper function for gradient checking.
+    The inverse of the previous function. Returning
     the parameters with given dimensions from a vector
     arguments:
     -vector: a numpy array of shape (n,1)
     -dims: a list with the dimensions of the parameters. Containing 1x2 arrays with the
            shape of each parameter, for example: dims = [[3,4], [3,1]] for two parameters, a weights 3x4 matrix and a
-           bias parameter b of shape 4x1"""
+           bias parameter b of shape 4x1
+           """
     n = len(dims)
     parameters = []
     end_dims = 0
@@ -41,6 +45,20 @@ def vector_to_parameters(vector, dims):
 
 
 def Forward_calculations(X, parameters, functions):
+    """Third helper function for gradient checking.
+    Calculate forward propagation, given the parameters
+    and functions of the network.
+    Inputs:
+    -parameters: [list] in the form of [W1, b1, ...]
+                 where W1, b1, ... are np.arrays with the
+                 weights and biases of each layer.
+    -functions: [list] the activation functions of the
+                 layers
+    -X: [np.array] the data
+
+    Returns: The output of the network given data X.
+             Specifically the activation of the last layer.
+    """
     L = len(parameters)
     A = X
     count = 0
@@ -52,13 +70,21 @@ def Forward_calculations(X, parameters, functions):
 
 
 def compute_cost(A, Y):
+    """Fourth helper function for gradient checking.
+    Calculate the cost of the networks output.
+    Inputs:
+    -A: The last layers activation
+    -Y: The true labels
+    Returns:
+    -costs: The cost of the networks output
+    """
     m = Y.shape[1]
     logprobs = np.multiply(-np.log(A), Y) + np.multiply(-np.log(1 - A), 1 - Y)
-    costs = 1./m * np.sum(logprobs)
-    return costs
+    cost = 1./m * np.sum(logprobs)
+    return cost
 
 
-def gradient_checking(NeuralNetwork, X, Y, num_of_training_iterations=1, epsilon=1e-7):
+def gradient_checking(NeuralNetwork, X, Y, num_of_iterations=1, epsilon=1e-7):
     """performing gradient checking to a neural network
     Arguments:
         -NeuralNetwork: A NeuralNetwork object, on witch will be performed the gradient checking
@@ -73,21 +99,21 @@ def gradient_checking(NeuralNetwork, X, Y, num_of_training_iterations=1, epsilon
         NeuralNetwork.train(X, Y, 1) in a for loop, saving the parameters and then performing training
         (front and back prop)"""
 
-    # Training the network for num_of_training_iterations
-    parameter_vector = None
-    for i in range(num_of_training_iterations):
+    # Training the network for num_of_iterations
+    Opt = GradientDescent(1, 0.01, None)
+    for i in range(num_of_iterations):
         # terning the parameters and gradients to one vector
         parameter_vector = parameters_to_vectors(NeuralNetwork.parameters)
-        gradient_descent(NeuralNetwork, X, Y, 1)
+        Opt.batch_epoch(NeuralNetwork, X, Y)
 
     num_parameters = len(parameter_vector)
     # used to return the parameters from the vector: parameter_vector (see vector_to_parameters)
     parameters_dims = [NeuralNetwork.parameters[i].shape for i in range(len(NeuralNetwork.parameters))]
-
     # terning the gradients calculated after training to one vector
     grad = parameters_to_vectors(NeuralNetwork.grads)
     grads_dims = [NeuralNetwork.grads[i].shape for i in range(len(NeuralNetwork.grads))]
 
+    layers_functions = [layer.function for layer in NeuralNetwork.Layers[1:]]
     # J_plus[i] will be the cost when to the i entry of the parameter_vector is added epsilon.
     # similar for J_minus.
     # gradapprox holds the values for the approximation of the derivatives with respect to parameter i
@@ -98,22 +124,24 @@ def gradient_checking(NeuralNetwork, X, Y, num_of_training_iterations=1, epsilon
     print("Gradients testing", end='')
     for i in range(num_parameters):
         theta_plus = np.copy(parameter_vector)
-        theta_plus[i] += epsilon
+        theta_plus[i][0] += epsilon
         theta_minus = np.copy(parameter_vector)
-        theta_minus[i] -= epsilon
+        theta_minus[i][0] -= epsilon
         plus_parameters = vector_to_parameters(theta_plus, parameters_dims)
+
         minus_parameters = vector_to_parameters(theta_minus, grads_dims)
         # front propagation using the parameters theta_plus and theta minus
         # using theta plus
-        AL_plus = Forward_calculations(X, plus_parameters, NeuralNetwork.layers_functions)
+        AL_plus = Forward_calculations(X, plus_parameters, layers_functions)
+
         J_plus[i] = compute_cost(AL_plus, Y)
         # using theta minus
-        AL_minus = Forward_calculations(X, minus_parameters, NeuralNetwork.layers_functions)
+        AL_minus = Forward_calculations(X, minus_parameters, layers_functions)
         J_minus[i] = compute_cost(AL_minus, Y)
         # approximation of the gradient with respect to the i parameter
         gradapprox[i] = (J_plus[i] - J_minus[i]) / (2 * epsilon)
-
         print(".", end='')
+
     # Compare gradapprox to backward propagation gradients by computing difference.
     numerator = np.linalg.norm(grad - gradapprox)  # Step 1'
     denominator = np.linalg.norm(grad) + np.linalg.norm(gradapprox)  # Step 2'

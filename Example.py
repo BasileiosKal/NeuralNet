@@ -2,10 +2,11 @@ import data.Data_libraries.moons as data
 from Optimization.OptimizationAlgorithms import GradientDescent, MomentumGradient
 from Networks.NeuralNetworks import NeuralNetwork, FCLayerBuilder, InputLayer
 from Utilities.Functions import RELU, Sigmoid
+from Utilities.Gradient_Checking import gradient_checking
 import numpy as np
 
-relu = RELU(np.array([[0]]))
-sigmoid = Sigmoid(0)
+relu = RELU()
+sigmoid = Sigmoid()
 
 X, Y = data.load_moon_data(n_samples=1000)
 
@@ -46,3 +47,5 @@ Hyper_parameters = Hyper.values()
 Network = NeuralNetwork(layers)
 Optimizer = GradientDescent(*Hyper_parameters)
 cost = Network.train(X, Y, Optimizer, plot_boundary=True, plot_cost=True)
+
+# diff = gradient_checking(Network, X, Y, num_of_iterations=10000)

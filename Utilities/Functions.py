@@ -1,10 +1,15 @@
 import numpy as np
 
 
-class Sigmoid:
-    def __init__(self, value):
-        self.value = self.calculate(value)
-        self.deriv = self.derivative(value)
+class FunctionsBase:
+    def __init__(self):
+        self.value = None
+        self.deriv = None
+
+
+class Sigmoid(FunctionsBase):
+    def __init__(self):
+        super().__init__()
 
     def calculate(self, value):
         self.value = 1/(1+np.exp(-value))
@@ -15,10 +20,9 @@ class Sigmoid:
         return self.deriv
 
 
-class Identity:
-    def __init__(self, value):
-        self.value = self.calculate(value)
-        self.deriv = self.derivative(value)
+class Identity(FunctionsBase):
+    def __init__(self):
+        super().__init__()
 
     def calculate(self, value):
         self.value = value
@@ -29,10 +33,9 @@ class Identity:
         return self.deriv
 
 
-class RELU:
-    def __init__(self, value):
-        self.value = self.calculate(value)
-        self.deriv = self.derivative(value)
+class RELU(FunctionsBase):
+    def __init__(self):
+        super().__init__()
 
     def calculate(self, value):
         D = (value > 0).astype(int)

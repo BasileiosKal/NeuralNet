@@ -20,5 +20,5 @@ for module in testing_modules[1:]:
     testSuite2 = loader.discover(module)
     testSuite.addTests(testSuite2)
 
-testRunner = unittest.TextTestRunner(descriptions=False, verbosity=2)
+testRunner = unittest.TextTestRunner(descriptions=False, verbosity=3)
 testRunner.run(testSuite)

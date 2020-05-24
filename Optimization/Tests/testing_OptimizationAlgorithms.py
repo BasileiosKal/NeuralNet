@@ -14,8 +14,8 @@ Y2 = TestCases.Y2
 [dA2, dA1] = TestCases.dA
 
 # Functions for the activation functions of the layers
-relu = Functions.RELU(np.array([[0]]))
-sigmoid = Functions.Sigmoid(0)
+relu = Functions.RELU()
+sigmoid = Functions.Sigmoid()
 
 # The network for the testing
 Input = {"type": "Input", "dim": X2.shape[0]}

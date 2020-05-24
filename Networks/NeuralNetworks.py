@@ -271,17 +271,17 @@ class NeuralNetwork(NeuralNetworkBase):
     @property
     def parameters(self):
         parameters = []
-        for layer in range(1, self.L - 1):  # keys from 1 to L-1 (not counting layer 0)
-            parameters.append(self.Layers[layer].W)
-            parameters.append(self.Layers[layer].b)
+        for layer in range(1, self.L):  # keys from 1 to L-1 (not counting layer 0)
+            parameters.append(copy.copy(self.Layers[layer].W))
+            parameters.append(copy.copy(self.Layers[layer].b))
         return parameters
 
     @property
     def grads(self):
         grads = []
-        for layer in range(1, self.L - 1):  # keys from 1 to L (not counting layer 0)
-            grads.append(self.Layers[layer].dW)
-            grads.append(self.Layers[layer].db)
+        for layer in range(1, self.L):  # keys from 1 to L (not counting layer 0)
+            grads.append(copy.copy(self.Layers[layer].dW))
+            grads.append(copy.copy(self.Layers[layer].db))
         return grads
 
     def train(self, X, Y, Optimization_algorithm, plot_boundary=False, plot_cost=False, print_result=True):

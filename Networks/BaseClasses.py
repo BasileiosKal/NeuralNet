@@ -1,6 +1,3 @@
-# ================================================================================================= #
-#                                       Layers base class                                           #
-# ================================================================================================= #
 class LayersBaseClass:
     """Base class for the layers objects.
     It sets the name and Regularization type
@@ -20,9 +17,6 @@ class LayersBaseClass:
         self.Regularization = kwargs["Regularization"]
 
 
-# ================================================================================================= #
-#                                     Neural Network base class                                     #
-# ================================================================================================= #
 class NeuralNetworkBase:
     """Base neural network class. The Base class is necessary as to
     be able to extent to different network architectures with the same
