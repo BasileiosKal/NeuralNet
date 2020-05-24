@@ -3,6 +3,15 @@ import numpy as np
 
 
 def plot_decision_boundary(model, X, y):
+    """Plotting the decision boundary when the
+    data X are 2D.
+    Inputs:
+    -model: The Neural network model for mapping data X to
+            the networks output. Usually will have te form:
+            lambda x: self.predict(x.T)
+    -X: Data
+    -Y: True labels of the data
+    """
     # Set min and max values and give it some padding
     x_min, x_max = X[0, :].min() - 1, X[0, :].max() + 1
     y_min, y_max = X[1, :].min() - 1, X[1, :].max() + 1
