@@ -25,12 +25,12 @@ Besides this classes there other functionalities as well, like a Functions class
 
 
 ## Examples 
-#### Training a BinaryClassifier on the Moons data set:
+#### Setting the structure of the Network:
 ![Example 1](https://raw.githubusercontent.com/BasileiosKal/NeuralNet/master/Images/example1.png)
 #### Build an gradient descent optimizer.
 ![Example 1](https://raw.githubusercontent.com/BasileiosKal/NeuralNet/master/Images/Example2.png)
-#### Training multiple networks using different optimizers for each one.
-![Example 2](https://raw.githubusercontent.com/BasileiosKal/NeuralNet/master/Images/example2.png)
+#### Create the Network and train it with the optimizer created before.
+![Example 2](https://raw.githubusercontent.com/BasileiosKal/NeuralNet/master/Images/Example3.png)
 
 
 ## Future work
