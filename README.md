@@ -31,7 +31,13 @@ Besides this classes there other functionalities as well, like a Functions class
 ![Example 1](https://raw.githubusercontent.com/BasileiosKal/NeuralNet/master/Images/Example2.png)
 #### Create the Network and train it with the optimizer created before.
 ![Example 2](https://raw.githubusercontent.com/BasileiosKal/NeuralNet/master/Images/Example3.png)
+#### Results
+![Resulting graphs](https://raw.githubusercontent.com/BasileiosKal/NeuralNet/master/Images/Figure_1.png)
+![Overall results](https://raw.githubusercontent.com/BasileiosKal/NeuralNet/master/Images/ResultsExample.png)
 
+## Testing
+For testing i used the unittest module. Each package (exept Utilitis) contains a Testing subfolder with the test for that specifice modules. In order to run all the test at ones the user can run the Testing/run_tests.py module.
+Alternatively each testing module can be run by it self using the -m unittest [testing module path]. 
 
 ## Future work
 As it is, the module contains only fully connected layers and so currently i'm working on adding convolutional layers, ResNets, inception layers exc. Also the optimizers that are implemented at the time are Gradient Descent, Momentum Gradient Descent and RMSprop, so i'm working to add the Adam optimizer to the mix.
