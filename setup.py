@@ -15,7 +15,7 @@ sys.path.insert(0, NeuralNet_dir)
 sys.path.append(os.path.join(NeuralNet_dir, 'Optimization'))
 
 setuptools.setup(
-    name="example-pkg-YOUR-USERNAME-HERE",
+    name="VasilisKalos",
     version="0.0.1",
     author="Vasilis Kalos",
     author_email="kalosbasileios@gmail.com",
