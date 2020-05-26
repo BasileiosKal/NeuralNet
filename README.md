@@ -1,6 +1,6 @@
 # NeuralNet
 
-A deep learning framework built from scratch using Python.
+A deep learning framework built from scratch using Python and optimized with Cython.
 
 ## Overview
 
@@ -38,6 +38,9 @@ Besides this classes there other functionalities as well, like a Functions class
 ## Testing
 For testing i used the unittest module. Each package (exept Utilitis) contains a Testing subfolder with the test for those specific modules. In order to run all the test at once the user can run the Testing/run_tests.py module.
 Alternatively each testing module can be ran by it self using the -m unittest [testing module path]. 
+
+## Cython
+The OptimizationAlgorithms module has a Cython alternative (called OptimizationAlgorithms_Cython.pyx) that can run almost 30 times faster in comparison to the Python one. The reazon i have kept both pure Python and Cython modules is that the Cython optimized gradient descent seems to run slower for large numper of iterations (more than 10000). Until this issue is fixed i decided to have Cython as an alternative rather than use it as the main module.
 
 ## Future work
 As it is, the module contains only fully connected layers and so currently i'm working on adding convolutional layers, ResNets, inception layers exc. Also the optimizers that are implemented at the time are Gradient Descent, Momentum Gradient Descent and RMSprop, so i'm working to add the Adam optimizer to the mix.
