@@ -36,30 +36,13 @@ FClayer4 = {"Builder": FCLayerBuilder,
             "Regularization": None,
             "name": "FC Layer 4"}
 
-layers = [Input, FClayer4]
-
-
+layers = [Input, FClayer1, FClayer2, FClayer3, FClayer4]
+Network_py = NeuralNetwork(layers)
 
 Hyper = {"iterations": 1000,
          "learning_rate": 0.01,
          "mini_batch": None}
-
 Hyper_parameters = Hyper.values()
-
-Network_py = NeuralNetwork(layers)
-
 Optimizer_py = GradientDescent(*Hyper_parameters)
 
-#=====================================================================================#
-
-#start_py_time = time.time()
-
-def run_p():
-    Network_py.train(X, Y, Optimizer_py, plot_boundary=False, plot_cost=False, print_result=False)
-
-run_p()
-#py_time = (time.time() - start_py_time)
-#print(py_time)
-
-# diff = gradient_checking(Network, X, Y, num_of_iterations=10000)
-# print("--- %s seconds ---" % (time.time() - start_time))
+Network_py.train(X, Y, Optimizer_py, plot_boundary=False, plot_cost=False, print_result=False)
