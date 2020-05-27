@@ -31,5 +31,6 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
     include_dirs = [numpy.get_include()],
-    ext_modules=cythonize(["Optimization/OptimizationAlgorithms_Cython.pyx"])
+    package_dir={'CythonTest': ''},
+    ext_modules=cythonize(["CythonTest/OptimizationAlgorithms_Cython.pyx"])
 )

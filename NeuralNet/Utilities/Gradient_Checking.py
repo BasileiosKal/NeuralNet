@@ -1,5 +1,5 @@
 import numpy as np
-from Optimization.OptimizationAlgorithms import GradientDescent
+from Optimization.OptimizationAlgorithms_Py import GradientDescent_py
 
 
 def parameters_to_vectors(parameters):

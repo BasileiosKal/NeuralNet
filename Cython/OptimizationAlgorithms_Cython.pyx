@@ -1,12 +1,19 @@
 import numpy as np
-from Optimization.OptBaseClass import Optimizer, compute_cost
-from Optimization.Mini_Batch import create_mini_batches
+cimport numpy as np
+from NeuralNet.Optimization.OptBaseClass import Optimizer
+from NeuralNet.Optimization.Mini_Batch import create_mini_batches
+from NeuralNet.Networks.NeuralNetworks import NeuralNetwork
 
+cpdef double compute_cost(double [:, :] A, long [:, :] Y):
+    cdef Py_ssize_t m = Y.shape[1]
+    cdef double [:, :] Ones = np.ones((1, m))
+    logprobs = np.multiply(-np.log(A), Y) + np.multiply(-np.log(np.subtract(Ones, A)), np.subtract(Ones, Y))
+    return 1./m * np.sum(logprobs)
 
 # =============================================================================================== #
 #                                      gradient descent                                           #
 # =============================================================================================== #
-def gradient_descent_back_propagation(Network, dZL, X):
+cdef void gradient_descent_back_propagation(object Network, double [:, :] dZL, double [:, :] X):
     """Performing back propagation to the whole network.
 
     Inputs:
@@ -21,7 +28,10 @@ def gradient_descent_back_propagation(Network, dZL, X):
      layer.
 
     """
-    m = dZL.shape[1]
+    cdef int m = dZL.shape[1]
+    cdef int index
+    cdef int net_len = len(Network.Layers[1:-1])
+
     # Setting up the input layer "activation" as X
     inputLayer = Network.Layers[0]
     inputLayer.activation = X
@@ -31,13 +41,13 @@ def gradient_descent_back_propagation(Network, dZL, X):
     current_layer = Network.Layers[-1]
     current_layer.dZ = dZL
 
-    for layer in reversed(Network.Layers[1:-1]):
-        prev_layer = layer
+    for index in range(net_len, 1, -1):
+        prev_layer = Network.Layers[index]
 
         current_layer.backward_calc(prev_layer, m)
         # calculate the linear activation gradient of the previous layer
-        prev_layer.dZ = np.dot(current_layer.W.T, current_layer.dZ) * prev_layer.function.derivative(
-            prev_layer.linear_z)
+        prev_layer.dZ = np.dot(np.dot(current_layer.W.T, current_layer.dZ), prev_layer.function.derivative(
+            prev_layer.linear_z))
 
         # Update the current layer
         current_layer = prev_layer
@@ -46,19 +56,23 @@ def gradient_descent_back_propagation(Network, dZL, X):
     Network.Layers[1].backward_calc(inputLayer, m)
 
 
-def propagation(Network, X, Y):
+cdef float propagation(object Network, double [:, :] X, long [:, :] Y):
     """Forward and backward propagation in the network"""
+    cdef double [:, :] Y_hat
+    cdef float cost_value
+    cdef double [:, :] dZL
+
     # front propagation
     Y_hat = Network.front_propagation(X)
     # cost
     cost_value = compute_cost(Y_hat, Y)
     # back propagation
-    dZL = Y_hat - Y
+    dZL = np.subtract(Y_hat, Y)
     gradient_descent_back_propagation(Network, dZL, X)
     return cost_value
 
 
-class GradientDescent(Optimizer):
+class GradientDescent:
     """Gradient descent optimizer
     inputs: iterations: [int] number of iterations
             learning_rate: [float]
@@ -72,29 +86,34 @@ class GradientDescent(Optimizer):
         >>> Optimizer = GradientDescent(*Hyper_parameters)
         >>> cost = Network.Train(X, Y, Optimizer)
 
-        Results:
+    Results:
         --------------------------------------------------------------------------------
         Gradient descent. Cost after 1000 iterations: 0.0012351339879395997
         Accuracy with Momentum: 0.975
         --------------------------------------------------------------------------------
 
         """
-    def __init__(self, iterations, learning_rate, Mini_batch):
-        super().__init__(iterations, learning_rate, Mini_batch)
+    def __init__(self, int iterations, double learning_rate, mini_batch):
+        self.mini_batch = mini_batch
+        self.iterations = iterations
+        self.learning_rate = learning_rate
         self.AlgorithmType = "Gradient descent"
 
-    def update_parameters_with_grad_descent(self, Network):
-        for ii in range(Network.L - 1):
+    def update_parameters_with_grad_descent(self, object Network):
+        cdef int ii
+        cdef int Net_len = Network.L
+        for ii in range(Net_len - 1):
             Network.Layers[ii + 1].W -= self.learning_rate * Network.Layers[ii + 1].dW
             Network.Layers[ii + 1].b -= self.learning_rate * Network.Layers[ii + 1].db
 
-    def batch_epoch(self, Network, X, Y):
+    def batch_epoch(self, object Network, double [:, :] X, long [:, :] Y):
         """Epoch through the whole Data
         X with true labels Y
         """
-        cost_val = propagation(Network, X, Y)
+        cdef float cost_value
+        cost_value =  propagation(Network, X, Y)
         self.update_parameters_with_grad_descent(Network)
-        return cost_val
+        return cost_value
 
     def mini_batch_epoch(self, Network, X, Y):
         """Mini batch epoch. On every iteration
@@ -105,6 +124,7 @@ class GradientDescent(Optimizer):
         mini_batches = create_mini_batches(X, Y, self.mini_batch)
         cost_total = 0
         m = X.shape[1]
+
         for batch in mini_batches:
             (batch_X, batch_Y) = batch
             # one epoch using momentum on the mini batch.
@@ -114,8 +134,18 @@ class GradientDescent(Optimizer):
             self.update_parameters_with_grad_descent(Network)
         cost_avg = cost_total / m
         return cost_avg
+    
+    @property
+    def epoch(self):
+        """Function to return the epoch to be used for optimization
+        depending on the mini_batch hyper parameters of the optimization"""
+        if self.mini_batch is None:
+            Epoch = self.batch_epoch
+        else:
+            Epoch = self.mini_batch_epoch
+        return Epoch
 
-    def Optimize(self, Network, X, Y, print_result):
+    def Optimize(self, object Network, double [:, :] X, long [:, :] Y, print_result):
         """Run each Epoch multiple times to
         optimize the cost function. Deepening on the
         mini_batch parameter the self.epoch will
@@ -125,19 +155,21 @@ class GradientDescent(Optimizer):
         Optimizers base class (see Optimization/OptBaseClass).
 
         """
-        cost = []
-        self.initialize(Network)
+
+        cdef int iteration
+        cdef float cost_value
+        cdef int num_iterations = self.iterations
+        
         Epoch = self.epoch
-        for iteration in range(self.iterations):
+        
+        for iteration in range(num_iterations):
             cost_value = Epoch(Network, X, Y)
-            cost.append(cost_value)
 
         if print_result:
             print("--------------------------------------------------------------------------------")
-            print("Gradient descent. Cost after " + str(self.iterations) + " iterations: " + str(cost[-1]))
-            print("Accuracy with Momentum: " + str(1 - ((np.sum(abs(Network.predict(X) - Y))) / Y.shape[1])))
+            print("Gradient descent. Cost after " + str(self.iterations) + " iterations: " + str(cost_value))
+            print("Accuracy with Gradient descent: " + str(1 - ((np.sum(abs(Network.predict(X) - Y))) / Y.shape[1])))
             print("--------------------------------------------------------------------------------")
-        return cost
 
 
 # =============================================================================================== #
