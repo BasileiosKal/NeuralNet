@@ -1,8 +1,8 @@
 import numpy as np
-from Utilities.Ploting import plot_decision_boundary
+from NeuralNet.Utilities.Ploting import plot_decision_boundary
 import matplotlib.pyplot as plt
 import copy
-from Networks.BaseClasses import NeuralNetworkBase, LayersBaseClass
+from NeuralNet.Networks.BaseClasses import NeuralNetworkBase, LayersBaseClass
 
 
 class InputLayer(LayersBaseClass):
@@ -79,9 +79,6 @@ class FCLayer(LayersBaseClass):
 
         self.dW = (1 / m) * np.dot(self.dZ, prev_layer.activation.T)
         self.db = (1 / m) * np.sum(self.dZ, axis=1, keepdims=True)
-
-        assert self.dW.shape == self.W.shape
-        assert self.db.shape == self.b.shape
 
 
 class FCLayerBuilder:
@@ -259,7 +256,7 @@ class NeuralNetwork(NeuralNetworkBase):
         self.Layers = [InputLayer(layers[0]["dim"])]
         previous_layer = self.Layers[0]
 
-        for index, layer in enumerate(layers[1:]):
+        for layer in layers[1:]:
             Builder = layer["Builder"]
             layer_parameters = list(layer.values())
 

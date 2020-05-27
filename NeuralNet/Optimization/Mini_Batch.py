@@ -1,4 +1,4 @@
-from Utilities.Utils import shuffle_data
+from NeuralNet.Utilities.Utils import shuffle_data
 import math
 
 

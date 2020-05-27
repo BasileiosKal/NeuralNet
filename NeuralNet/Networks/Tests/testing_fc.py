@@ -1,8 +1,8 @@
 from Networks.NeuralNetworks import NeuralNetwork, FCLayerBuilder
 from Utilities import Functions
-import Testing.TestCases as TestCases
+import tests.TestCases as TestCases
 import numpy as np
-from Optimization.OptimizationAlgorithms import GradientDescent
+from Optimization.OptimizationAlgorithms_Py import GradientDescent
 import unittest
 
 X2 = TestCases.X2
